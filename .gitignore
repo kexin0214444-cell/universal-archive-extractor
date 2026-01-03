@@ -4,6 +4,7 @@ extracted/
 *.log
 .DS_Store
 .env
+.usage.json
 test/
 test-*.zip
 test-*.js
