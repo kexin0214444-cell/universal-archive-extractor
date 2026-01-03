@@ -18,8 +18,12 @@ app.use(express.json());
 app.use(express.static('public'));
 
 // 确保目录存在
-const uploadsDir = path.join(__dirname, 'uploads');
-const extractedDir = path.join(__dirname, 'extracted');
+// Vercel 使用 /tmp 目录存储临时文件
+const isVercel = process.env.VERCEL === '1';
+const baseDir = isVercel ? '/tmp' : __dirname;
+
+const uploadsDir = path.join(baseDir, 'uploads');
+const extractedDir = path.join(baseDir, 'extracted');
 
 [uploadsDir, extractedDir].forEach(dir => {
   if (!fs.existsSync(dir)) {
@@ -308,7 +312,14 @@ app.delete('/api/clean/:dir(*)', (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`服务器运行在 http://localhost:${PORT}`);
-});
+// Vercel 部署时不需要监听端口，直接导出 app
+// 本地开发时监听端口
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`服务器运行在 http://localhost:${PORT}`);
+  });
+}
+
+// 导出 app 供 Vercel 使用
+module.exports = app;
 
