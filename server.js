@@ -55,8 +55,10 @@ app.get('/', (req, res) => {
 
 // 确保目录存在
 // Vercel 使用 /tmp 目录存储临时文件
+// Railway 和其他平台使用项目目录或 /tmp
 const isVercel = process.env.VERCEL === '1';
-const baseDir = isVercel ? '/tmp' : __dirname;
+const isRailway = process.env.RAILWAY_ENVIRONMENT !== undefined;
+const baseDir = isVercel ? '/tmp' : (isRailway ? '/tmp' : __dirname);
 
 const uploadsDir = path.join(baseDir, 'uploads');
 const extractedDir = path.join(baseDir, 'extracted');

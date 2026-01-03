@@ -1,0 +1,15 @@
+# Railway Nixpacks 配置
+# 用于自动安装系统依赖
+
+[phases.setup]
+nixPkgs = ["nodejs-18_x", "unrar", "p7zip"]
+
+[phases.install]
+cmds = ["npm install"]
+
+[phases.build]
+cmds = ["echo 'Build complete'"]
+
+[start]
+cmd = "node server.js"
+
