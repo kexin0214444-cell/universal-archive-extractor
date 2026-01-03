@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>通用压缩包解压工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 60px;
+            text-align: center;
+            background: #f8f9ff;
+            transition: all 0.3s;
+            cursor: pointer;
+            margin-bottom: 30px;
+        }
+
+        .upload-area:hover {
+            border-color: #764ba2;
+            background: #f0f2ff;
+        }
+
+        .upload-area.dragover {
+            border-color: #764ba2;
+            background: #e8ebff;
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+
+        .upload-text {
+            font-size: 1.2em;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .upload-hint {
+            color: #999;
+            font-size: 0.9em;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .progress-container {
+            display: none;
+            margin: 30px 0;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #e0e0e0;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .status {
+            text-align: center;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .file-list {
+            margin-top: 30px;
+            display: none;
+        }
+
+        .file-list h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .file-item {
+            padding: 15px;
+            background: #f8f9ff;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.2s;
+        }
+
+        .file-item:hover {
+            background: #f0f2ff;
+        }
+
+        .file-info {
+            flex: 1;
+        }
+
+        .file-name {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .file-size {
+            color: #999;
+            font-size: 0.9em;
+        }
+
+        .file-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-small {
+            padding: 8px 20px;
+            font-size: 0.9em;
+        }
+
+        .supported-formats {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9ff;
+            border-radius: 10px;
+        }
+
+        .supported-formats h3 {
+            margin-bottom: 15px;
+            color: #667eea;
+        }
+
+        .format-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .format-tag {
+            background: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            border: 2px solid #667eea;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📦 通用压缩包解压工具</h1>
+            <p>支持 ZIP、RAR、7Z、TAR、GZ 等多种格式，无大小限制</p>
+        </div>
+        
+        <div class="content">
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📁</div>
+                <div class="upload-text">点击或拖拽文件到此处上传</div>
+                <div class="upload-hint">支持 ZIP, RAR, 7Z, TAR, GZ, TGZ, BZ2, XZ 等格式</div>
+                <input type="file" id="fileInput" accept=".zip,.rar,.7z,.tar,.gz,.tgz,.bz2,.xz">
+            </div>
+
+            <div class="progress-container" id="progressContainer">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill">0%</div>
+                </div>
+                <div style="text-align: center; color: #667eea;" id="progressText">准备上传...</div>
+            </div>
+
+            <div class="status" id="status"></div>
+
+            <div class="file-list" id="fileList">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2 style="margin: 0;">解压后的文件</h2>
+                    <div>
+                        <button class="btn" onclick="downloadAll()" style="margin-right: 10px;">📦 打包下载全部</button>
+                        <button class="btn" onclick="cleanFiles()">清理文件</button>
+                    </div>
+                </div>
+                <div id="fileListContent"></div>
+            </div>
+
+            <div class="supported-formats">
+                <h3>支持的格式</h3>
+                <div class="format-tags">
+                    <span class="format-tag">ZIP</span>
+                    <span class="format-tag">RAR</span>
+                    <span class="format-tag">7Z</span>
+                    <span class="format-tag">TAR</span>
+                    <span class="format-tag">GZ</span>
+                    <span class="format-tag">TGZ</span>
+                    <span class="format-tag">BZ2</span>
+                    <span class="format-tag">XZ</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+        const status = document.getElementById('status');
+        const fileList = document.getElementById('fileList');
+        const fileListContent = document.getElementById('fileListContent');
+
+        let currentOutputDir = null;
+
+        // 点击上传区域
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        // 文件选择
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                uploadFile(e.target.files[0]);
+            }
+        });
+
+        // 拖拽上传
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            if (e.dataTransfer.files.length > 0) {
+                uploadFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        // 上传文件
+        async function uploadFile(file) {
+            const formData = new FormData();
+            formData.append('archive', file);
+
+            // 显示进度
+            progressContainer.style.display = 'block';
+            status.style.display = 'none';
+            fileList.style.display = 'none';
+            progressFill.style.width = '0%';
+            progressFill.textContent = '0%';
+            progressText.textContent = '正在上传...';
+
+            try {
+                const xhr = new XMLHttpRequest();
+
+                // 上传进度
+                xhr.upload.addEventListener('progress', (e) => {
+                    if (e.lengthComputable) {
+                        const percent = Math.round((e.loaded / e.total) * 100);
+                        progressFill.style.width = percent + '%';
+                        progressFill.textContent = percent + '%';
+                        progressText.textContent = `上传中: ${formatFileSize(e.loaded)} / ${formatFileSize(e.total)}`;
+                    }
+                });
+
+                // 完成
+                xhr.addEventListener('load', () => {
+                    if (xhr.status === 200) {
+                        progressText.textContent = '正在解压...';
+                        const response = JSON.parse(xhr.responseText);
+                        handleExtractionSuccess(response);
+                    } else {
+                        const error = JSON.parse(xhr.responseText);
+                        showStatus('error', '错误: ' + error.error);
+                        progressContainer.style.display = 'none';
+                    }
+                });
+
+                // 错误
+                xhr.addEventListener('error', () => {
+                    showStatus('error', '上传失败，请重试');
+                    progressContainer.style.display = 'none';
+                });
+
+                xhr.open('POST', '/api/upload');
+                xhr.send(formData);
+            } catch (error) {
+                showStatus('error', '上传失败: ' + error.message);
+                progressContainer.style.display = 'none';
+            }
+        }
+
+        // 处理解压成功
+        async function handleExtractionSuccess(response) {
+            currentOutputDir = response.outputDir;
+            progressFill.style.width = '100%';
+            progressFill.textContent = '100%';
+            progressText.textContent = '解压完成！';
+            
+            showStatus('success', `解压成功！共 ${response.extractedFiles.length} 个文件/目录`);
+            
+            // 延迟显示文件列表
+            setTimeout(() => {
+                progressContainer.style.display = 'none';
+                displayFiles(response.extractedFiles);
+            }, 1000);
+        }
+
+        // 显示文件列表
+        function displayFiles(files) {
+            fileList.style.display = 'block';
+            fileListContent.innerHTML = '';
+
+            files.forEach(file => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                
+                const fileInfo = document.createElement('div');
+                fileInfo.className = 'file-info';
+                
+                const fileName = document.createElement('div');
+                fileName.className = 'file-name';
+                fileName.textContent = file.name;
+                
+                const fileSize = document.createElement('div');
+                fileSize.className = 'file-size';
+                fileSize.textContent = file.type === 'file' ? formatFileSize(file.size) : '目录';
+                
+                fileInfo.appendChild(fileName);
+                fileInfo.appendChild(fileSize);
+                
+                fileItem.appendChild(fileInfo);
+                fileListContent.appendChild(fileItem);
+            });
+        }
+
+        // 打包下载全部文件
+        async function downloadAll() {
+            if (!currentOutputDir) {
+                showStatus('error', '没有可下载的文件');
+                return;
+            }
+            
+            showStatus('info', '正在打包文件，请稍候...');
+            
+            try {
+                // 处理路径：如果包含 extracted/ 前缀，只取目录名
+                let dirName = currentOutputDir;
+                if (dirName.includes('/')) {
+                    dirName = dirName.split('/').pop();
+                }
+                if (dirName.includes('\\')) {
+                    dirName = dirName.split('\\').pop();
+                }
+                
+                const url = `/api/download-all/${encodeURIComponent(dirName)}`;
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    let errorMessage = '下载失败';
+                    try {
+                        const errorData = await response.json();
+                        errorMessage = errorData.error || errorMessage;
+                    } catch (e) {
+                        errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+                    }
+                    throw new Error(errorMessage);
+                }
+                
+                // 检查响应类型
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/zip')) {
+                    console.warn('警告: 响应类型不是 ZIP:', contentType);
+                }
+                
+                // 获取文件 blob
+                const blob = await response.blob();
+                
+                // 检查 blob 大小
+                if (blob.size === 0) {
+                    throw new Error('下载的文件为空');
+                }
+                
+                // 创建下载链接
+                const downloadUrl = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = downloadUrl;
+                link.download = `${currentOutputDir}.zip`;
+                document.body.appendChild(link);
+                link.click();
+                
+                // 延迟移除，确保下载开始
+                setTimeout(() => {
+                    document.body.removeChild(link);
+                    window.URL.revokeObjectURL(downloadUrl);
+                }, 100);
+                
+                showStatus('success', `打包下载完成！文件大小: ${formatFileSize(blob.size)}`);
+            } catch (error) {
+                console.error('下载错误:', error);
+                showStatus('error', '下载失败: ' + error.message);
+            }
+        }
+
+        // 清理文件
+        async function cleanFiles() {
+            if (!currentOutputDir) {
+                showStatus('error', '没有可清理的文件');
+                return;
+            }
+            
+            try {
+                // 处理路径：如果包含 extracted/ 前缀，只取目录名
+                let dirName = currentOutputDir;
+                if (dirName.includes('/')) {
+                    dirName = dirName.split('/').pop();
+                }
+                if (dirName.includes('\\')) {
+                    dirName = dirName.split('\\').pop();
+                }
+                
+                const url = `/api/clean/${encodeURIComponent(dirName)}`;
+                const response = await fetch(url, {
+                    method: 'DELETE'
+                });
+                
+                if (!response.ok) {
+                    let errorMessage = '清理失败';
+                    try {
+                        const errorData = await response.json();
+                        errorMessage = errorData.error || errorMessage;
+                    } catch (e) {
+                        errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+                    }
+                    throw new Error(errorMessage);
+                }
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showStatus('success', '文件已清理');
+                    fileList.style.display = 'none';
+                    currentOutputDir = null;
+                } else {
+                    showStatus('error', '清理失败: ' + (data.error || '未知错误'));
+                }
+            } catch (error) {
+                console.error('清理错误:', error);
+                showStatus('error', '清理失败: ' + error.message);
+            }
+        }
+
+        // 显示状态消息
+        function showStatus(type, message) {
+            status.className = 'status ' + type;
+            status.textContent = message;
+            status.style.display = 'block';
+        }
+
+        // 格式化文件大小
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        }
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,13 @@
+node_modules/
+uploads/
+extracted/
+*.log
+.DS_Store
+.env
+test/
+test-*.zip
+test-*.js
+*.zip
+.vscode/
+.idea/
+
