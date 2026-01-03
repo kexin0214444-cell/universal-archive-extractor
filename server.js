@@ -12,10 +12,46 @@ const { extract7z } = require('./extractors/7zExtractor');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// 错误处理中间件（放在最前面）
+app.use((req, res, next) => {
+  try {
+    next();
+  } catch (error) {
+    console.error('请求处理错误:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // 中间件
 app.use(cors());
 app.use(express.json());
-app.use(express.static('public'));
+
+// 静态文件服务
+const publicPath = path.join(__dirname, 'public');
+if (fs.existsSync(publicPath)) {
+  app.use(express.static(publicPath));
+}
+
+// 根路径返回 index.html
+app.get('/', (req, res) => {
+  try {
+    const indexPath = path.join(__dirname, 'public', 'index.html');
+    if (fs.existsSync(indexPath)) {
+      res.sendFile(indexPath);
+    } else {
+      console.error('index.html 路径:', indexPath);
+      console.error('__dirname:', __dirname);
+      res.status(404).json({ 
+        error: 'index.html not found',
+        path: indexPath,
+        dirname: __dirname
+      });
+    }
+  } catch (error) {
+    console.error('根路径错误:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
 
 // 确保目录存在
 // Vercel 使用 /tmp 目录存储临时文件
